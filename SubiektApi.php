@@ -41,6 +41,7 @@ class SubiektApi
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->verify_ssl);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($request_data));
             $result = curl_exec($ch);
+            curl_close($ch);            
         } else {
             $json_data = json_encode($args);
             $result    = file_get_contents($url, null, stream_context_create(array(
