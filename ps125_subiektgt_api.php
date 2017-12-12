@@ -244,6 +244,19 @@ class Ps125_SubiektGT_Api extends Module {
 		return $orders;
 	}
 
+
+	public function getOrdersToMakeSellDoc(){
+		$SQL = 'SELECT id_order,gt_order_ref FROM '._DB_PREFIX_.'subiektgt_api 
+				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 AND is_locked = 0 AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)
+				LIMIT 50;';
+		$orders = array();
+		$order_to_send = DB::getInstance()->ExecuteS($SQL);
+		foreach($order_to_send as $order){
+			$orders[$order['id_order']] = $order['gt_order_ref'];
+		}			
+		return $orders;
+	}
+
 	static protected function emailFix($email){
 		return eregi_replace("[0-9]+-_-","",$email);
 	}
@@ -259,8 +272,14 @@ class Ps125_SubiektGT_Api extends Module {
 	}
 
 
-	static public function setSentOrderToSubiekt($id_order){
-		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_order_sent = 1, upd_date = NOW() WHERE id_order = '.$id_order;
+	static public function setSentOrderToSubiekt($id_order,$ref_order){
+		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_order_sent = 1, upd_date = NOW(),gt_order_ref = \''.$ref_order.'\' WHERE id_order = '.$id_order;
+		return DB::getInstance()->Execute($DML);
+	}
+
+
+	static public function setSentSellDocToSubiekt($id_order,$ref_order){
+		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_doc_sent = 1, upd_date = NOW(),gt_order_ref = \''.$ref_order.'\' WHERE id_order = '.$id_order;
 		return DB::getInstance()->Execute($DML);
 	}
 
@@ -272,7 +291,7 @@ class Ps125_SubiektGT_Api extends Module {
 
 
 	public function hookpostUpdateOrderStatus($params){
-		print_r($params)	;		
+		//print_r($params)	;		
 		switch ($params['newOrderStatus']->id) {
 			case _PS_OS_PAYMENT_:
 					$this->unlockOrder($params['id_order']);
@@ -296,34 +315,18 @@ class Ps125_SubiektGT_Api extends Module {
 		global $smarty;
 		
 		$order = new Order($params['id_order']);
-		$products = $order->getProducts();
+		$SQL = 'SELECT * FROM  '._DB_PREFIX_.'subiektgt_api WHERE id_order = '.$params['id_order'];
+		$gt_state = DB::getInstance()->getRow($SQL);
+		$SQL = 'SELECT * FROM  '._DB_PREFIX_.'subiektgt_api_log WHERE id_order = '.$params['id_order'];
+		$logs = DB::getInstance()->ExecuteS($SQL);
 		
-		// $arrayProducts = 'var ean_products = Array()';
-		// $eans = array();
-		// foreach($products as $product){
-		// 	if($product['product_ean13']!=""){	
-		// 		$arrayProducts .= "\nean_products['".$product['product_id']."'] = '".$product['product_ean13']."';";					
-		// 		//$eans[$product['id_product']] = $product['product_ean13'];
-		// 	}elseif($product['product_supplier_reference']){
-		// 		$arrayProducts .= "\nean_products['".$product['product_id']."'] = '".$product['product_supplier_reference']."';";
-		// 		//$eans[$product['id_product']] = $product['product_supplier_reference'];														
-		// 	}
-		// }
+
 		
-		// //$arrayProducts .= implode('\',\'',$eans).'\');';
-		// $arrayProducts .= "\n";
-		// $arrayProducts .= 'var products_q = Array()';
-		// $quantity = array();
-		// foreach($products as $product){						
-		// 	//$quantity[$product['id_product']] = $product['product_quantity'];
-		// 	$arrayProducts .= "\nproducts_q['".$product['product_id']."'] = '".$product['product_quantity']."';"; 										
-		// }
-		
-		//$arrayProducts .= implode('\',\'',$quantity).'\');';
-		
-		// $smarty->assign(array(
+		 $smarty->assign(array(
+		 	'gtState' => $gt_state,
+		 	'logs' => $logs
 		// 		'arrayProducts' => $arrayProducts
-		// ));
+		 ));
 		return $this->display(__FILE__, 'AdminOrder.tpl');	
 	}
 			
