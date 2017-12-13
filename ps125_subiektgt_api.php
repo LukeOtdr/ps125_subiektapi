@@ -7,6 +7,8 @@ class Ps125_SubiektGT_Api extends Module {
 	private $auto_create_products = 1;
 	private $order_prefix = '';
 	private $error_state = 0;
+	private $docsell_state = 0;
+	private $code_ship_cost = '';
 
 
 
@@ -27,7 +29,9 @@ class Ps125_SubiektGT_Api extends Module {
 		$this->store_id = Configuration::get('SUBIEKTGT_API_STORE_ID');
 		$this->auto_create_products = Configuration::get('SUBIEKTGT_API_AUTO_CREATE_PRO');			
 		$this->order_prefix = Configuration::get('SUBIEKTGT_API_ORDER_PREFIX');	
-		$this->error_state = Configuration::get('SUBIEKTGT_API_ERROR_STATE');			
+		$this->error_state = Configuration::get('SUBIEKTGT_API_ERROR_STATE');	
+		$this->docsell_state = Configuration::get('SUBIEKTGT_API_DOCSELL_STATE');	
+		$this->code_ship_cost = Configuration::get('SUBIEKTGT_API_CODE_SHIPCOST');					
 	}
 	
 	public function install(){
@@ -100,11 +104,18 @@ class Ps125_SubiektGT_Api extends Module {
 			$this->auto_create_products = Tools::getValue('SUBIEKTGT_API_AUTO_CREATE_PRO');
 
 			Configuration::updateValue('SUBIEKTGT_API_ORDER_PREFIX', Tools::getValue('SUBIEKTGT_API_ORDER_PREFIX'));
-			$this->auto_create_products = Tools::getValue('SUBIEKTGT_API_ORDER_PREFIX');
+			$this->order_prefix = Tools::getValue('SUBIEKTGT_API_ORDER_PREFIX');
 
 			Configuration::updateValue('SUBIEKTGT_API_ERROR_STATE', Tools::getValue('SUBIEKTGT_API_ERROR_STATE'));
 			$this->error_state = Tools::getValue('SUBIEKTGT_API_ERROR_STATE');
 
+			Configuration::updateValue('SUBIEKTGT_API_DOCSELL_STATE', Tools::getValue('SUBIEKTGT_API_DOCSELL_STATE'));
+			$this->docsell_state = Tools::getValue('SUBIEKTGT_API_DOCSELL_STATE');
+
+			Configuration::updateValue('SUBIEKTGT_API_CODE_SHIPCOST', Tools::getValue('SUBIEKTGT_API_CODE_SHIPCOST'));
+			$this->code_ship_cost = Tools::getValue('SUBIEKTGT_API_CODE_SHIPCOST');
+
+			
 
 		}
 	}
@@ -113,7 +124,10 @@ class Ps125_SubiektGT_Api extends Module {
 		$subiektgt_api = Tools::getValue('SUBIEKTGT_API');
 		$subiektgt_api_key = Tools::getValue('SUBIEKTGT_API_KEY');
 		$store_id = Tools::getValue('SUBIEKTGT_API_STORE_ID');
-		$auto_create_products = Tools::getValue('SUBIEKTGT_API_AUTO_CREATE_PRO');		
+		$auto_create_products = Tools::getValue('SUBIEKTGT_API_AUTO_CREATE_PRO');
+		$code_ship_cost = Tools::getValue('SUBIEKTGT_API_CODE_SHIPCOST');
+
+				
 		
 		if("" == $subiektgt_api){			
 			$this->_postErrors[]=$this->l('Podaj adres http API subiektaGT');			
@@ -125,12 +139,16 @@ class Ps125_SubiektGT_Api extends Module {
 		if(0 == intval($store_id)){			
 			$this->_postErrors[]=$this->l('Wporwadź poprawy id magazynu z którego będą rezerwowane stany');			
 		}
+
+		if("" == $code_ship_cost){			
+			$this->_postErrors[]=$this->l('Podaj kod usługi transportowej z Subiekta');			
+		}
 	}
 		
 	private function _displayForm(){ 
 	global $cookie;
 	$order_states = OrderState::getOrderStates($cookie->id_lang);
-	//print_r($order_states);
+	//print_r($order_states);SUBIEKTGT_API_CODE_SHIPCOST
 	$this->_html .=
 		'<form action="'.$_SERVER['REQUEST_URI'].'" method="post">
 			<fieldset><legend>Subiekt integracja z API</legend>								
@@ -140,7 +158,9 @@ class Ps125_SubiektGT_Api extends Module {
 				<div style="margin-left:400px;margin-bottom:5px;margin-top:5px;"><input name="SUBIEKTGT_API_KEY" value="'.$this->subiektgt_api_key.'" size="50" type="text"></div>
 				<label style="width:350px;">Prefix dla nr zamówień on-line:</label>
 				<div style="margin-left:400px;margin-bottom:30px;margin-top:5px;"><input name="SUBIEKTGT_API_ORDER_PREFIX" value="'.$this->order_prefix.'" size="10" type="text"></div>
-				<label style="width:350px;">Identyfikator magazynu SubiektGT do rezerwacji produktów</label>				
+				<label style="width:350px;">Kod usługi transportowej subiektGT</label>								
+				<div style="margin-left:400px;margin-bottom:30px;margin-top:5px;"><input name="SUBIEKTGT_API_CODE_SHIPCOST" value="'.$this->code_ship_cost.'" size="30" type="text"></div>				
+				<label style="width:350px;">Identyfikator magazynu SubiektGT do rezerwacji produktów</label>
 				<div style="margin-left:400px;margin-bottom:30px;margin-top:5px;"><input name="SUBIEKTGT_API_STORE_ID" value="'.$this->store_id.'" size="20" type="text"></div>
 				<label style="width:350px;">Zmień status zamówienia gdy wystąpi problem z komunikacją:</label>				
 				<div style="margin-left:400px;margin-bottom:30px;margin-top:5px;">
@@ -150,8 +170,18 @@ class Ps125_SubiektGT_Api extends Module {
 					foreach($order_states as $os){
 						$this->_html.= "<option value=\"{$os['id_order_state']}\" ".($this->error_state == $os['id_order_state']?"selected":"").">{$os['name']}</option>";
 					}
-	$this->_html .='</select>
+	$this->_html .='</select>	
 				</div>
+				<label style="width:350px;">Zmień status gdy wegenerujesz PA lub FS:</label>				
+				<div style="margin-left:400px;margin-bottom:30px;margin-top:5px;">
+					<select name="SUBIEKTGT_API_DOCSELL_STATE">
+					<option value="0" selected>-- nie zmieniaj --</option>
+					';
+					foreach($order_states as $os){
+						$this->_html.= "<option value=\"{$os['id_order_state']}\" ".($this->docsell_state == $os['id_order_state']?"selected":"").">{$os['name']}</option>";
+					}
+	$this->_html .='</select>
+				</div>				
 				<label style="width:350px;">Autmatycznie tworzyć nowe produkty</label>
 				<div style="margin-left:400px;margin-bottom:5px;margin-top:5px;"><input name="SUBIEKTGT_API_AUTO_CREATE_PRO" type="radio" value="1" '.(1==intval($this->auto_create_products)?'checked':'').'> Tak
 					<input name="SUBIEKTGT_API_AUTO_CREATE_PRO" type="radio" value="0" '.(0==intval($this->auto_create_products)?'checked':'').'> Nie
@@ -192,6 +222,10 @@ class Ps125_SubiektGT_Api extends Module {
 		return $this->error_state;
 	}
 
+	public function getDocSellState(){
+		return $this->docsell_state;
+	}
+
 	public function getOrdersToSend(){
 		$SQL = 'SELECT id_order FROM '._DB_PREFIX_.'subiektgt_api WHERE gt_order_sent = 0 AND is_locked = 0 LIMIT 50;';
 		$orders = array();
@@ -202,12 +236,11 @@ class Ps125_SubiektGT_Api extends Module {
 			$products = $order_obj->getProductsDetail();
 			$address = new Address($order_obj->id_address_delivery);
 			$customer = new Customer($order_obj->id_customer);
-			//print_r($order_obj);
-			//print_r($products);
-			//var_dump($address);
-			//var_dump($customer);
+			$carrier = new Carrier($order_obj->id_carrier);
+			$messages = Message::getMessagesByOrderId($order_obj->id,true);
+			$count_msg = count($messages);
 			$orders[$order['id_order']] = array(
-						'comments' => $order_obj->payment,
+						'comments' => "Płatność: ".$order_obj->payment.", Wysyłka: ".$carrier->name.", Komentarze do zam.".$count_msg,
 						'reference' => $this->order_prefix.' '.$order_obj->id,
 						'create_product_if_not_exists' => $this->auto_create_products,
 						'amount' => $order_obj->total_paid_real,
@@ -239,20 +272,33 @@ class Ps125_SubiektGT_Api extends Module {
 				);
 				array_push($orders[$order['id_order']]['products'],$a_p);
 			}
+			if($order_obj->total_shipping>0){
+				$a_sp = array(
+						'ean'=>$this->code_ship_cost,
+						'code'=>$this->code_ship_cost,
+						'qty'=> 1,
+						'price' => $order_obj->total_shipping,
+						'price_before_discount' => $order_obj->total_shipping,
+						'name' => 'Koszty wysyłki',
+						'id_store' => $this->store_id,
+				);
+				array_push($orders[$order['id_order']]['products'],$a_sp);
+			}
 			//var_Dump($order['id_order']);
-		}
+		}		
 		return $orders;
 	}
 
 
 	public function getOrdersToMakeSellDoc(){
 		$SQL = 'SELECT id_order,gt_order_ref FROM '._DB_PREFIX_.'subiektgt_api 
-				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 AND is_locked = 0 AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)
+				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 AND is_locked = 0 
+				-- AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)
 				LIMIT 50;';
-		$orders = array();
+		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
-			$orders[$order['id_order']] = $order['gt_order_ref'];
+			$orders[$order['id_order']]['order_ref'] = $order['gt_order_ref'];
 		}			
 		return $orders;
 	}
@@ -279,7 +325,7 @@ class Ps125_SubiektGT_Api extends Module {
 
 
 	static public function setSentSellDocToSubiekt($id_order,$ref_order){
-		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_doc_sent = 1, upd_date = NOW(),gt_order_ref = \''.$ref_order.'\' WHERE id_order = '.$id_order;
+		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_doc_sent = 1, upd_date = NOW(),gt_sell_doc_ref = \''.$ref_order.'\' WHERE id_order = '.$id_order;
 		return DB::getInstance()->Execute($DML);
 	}
 
@@ -317,7 +363,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$order = new Order($params['id_order']);
 		$SQL = 'SELECT * FROM  '._DB_PREFIX_.'subiektgt_api WHERE id_order = '.$params['id_order'];
 		$gt_state = DB::getInstance()->getRow($SQL);
-		$SQL = 'SELECT * FROM  '._DB_PREFIX_.'subiektgt_api_log WHERE id_order = '.$params['id_order'];
+		$SQL = 'SELECT * FROM  '._DB_PREFIX_.'subiektgt_api_log WHERE id_order = '.$params['id_order'].' ORDER BY log_date DESC';
 		$logs = DB::getInstance()->ExecuteS($SQL);
 		
 
