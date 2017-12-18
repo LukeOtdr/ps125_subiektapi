@@ -7,38 +7,31 @@
 	$ps125_subiektgtapi = new Ps125_SubiektGT_Api();
 	echo '<pre>';
 	$orders = $ps125_subiektgtapi->getOrdersToMakeSellDoc();	
-	
+
 	$subiektapi = new SubiektApi($ps125_subiektgtapi->getAPIKey(),$ps125_subiektgtapi->getAPIEndpoint());
 	foreach($orders as $id_order=>$o){
 		$fail = false;
 		$ps125_subiektgtapi->lockOrder($id_order);
 		try{
-			$result = $subiektapi->call('order/makesaledoc',$o);			
+			$result = $subiektapi->call('order/get',$o);
 			if(is_array($result)){
-				$ps125_subiektgtapi->logEvent($id_order,'gt_sell_doc_sent',$result['state'],isset($result['message'])?$result['message']:json_encode($result['data']));		
+				$ps125_subiektgtapi->logEvent($id_order,'gt_check_sell_doc',$result['state'],isset($result['message'])?$result['message']:$result['data']['selling_doc']);		
 				if($result['state'] == 'fail'){
 					$fail = true;
 				}
 			}else{
-				$ps125_subiektgtapi->logEvent($id_order,'gt_sell_doc_sent','fail','Check server API logs!');			
+				$ps125_subiektgtapi->logEvent($id_order,'gt_check_sell_doc','fail','Check server API logs!');			
 				$fail = true;
 			}
 		}catch(Exception $e){
-			$ps125_subiektgtapi->logEvent($id_order,'gt_sell_doc_sent','fail','Check server API logs!');			
+			$ps125_subiektgtapi->logEvent($id_order,'gt_check_sell_doc','fail','Check server API logs!');			
 			$fail = true;
 		}
-		if(!$fail){			
-			$ps125_subiektgtapi->setSentSellDocToSubiekt($id_order,$result['data']['doc_ref']);
-			$docsell_state = $ps125_subiektgtapi->getDocSellState();
-			if($docsell_state>0){
-				$oh = new OrderHistory();			
-				$oh->id_order = $id_order;					
-				$oh->id_employee = 0;
-				$oh->changeIdOrderState($docsell_state,$id_order);
-				$oh->save();	
+		if(!$fail){	
+			if(isset($result['data']['selling_doc']) && $result['data']['selling_doc']!=''){
+				$ps125_subiektgtapi->setSentSellDocToSubiekt($id_order,$result['data']['selling_doc']);
 			}
-
-		}else{				
+		}else{	
 			$error_state = $ps125_subiektgtapi->getErrorOrderState();
 			if($error_state>0){
 				$oh = new OrderHistory();			
@@ -46,7 +39,7 @@
 				$oh->id_employee = 0;
 				$oh->changeIdOrderState($error_state,$id_order);
 				$oh->save();	
-			}		
+			}
 		}		
 		$ps125_subiektgtapi->unlockOrder($id_order);
 		print_r($result);	

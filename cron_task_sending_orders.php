@@ -28,14 +28,19 @@
 			$fail = true;
 		}
 		if(!$fail){			
-			$ps125_subiektgtapi->setSentOrderToSubiekt($id_order);
-		}else{				
-			$oh = new OrderHistory();			
-			$oh->id_order = $id_order;					
-			$oh->id_employee = 0;
-			$oh->changeIdOrderState($ps125_subiektgtapi->getErrorOrderState(),$id_order);
-			$oh->save();	
-		}
+			$ps125_subiektgtapi->setSentOrderToSubiekt($id_order,$result['data']['order_ref']);
+		}else{	
+			$error_state = $ps125_subiektgtapi->getErrorOrderState();
+			if($error_state>0){
+				$oh = new OrderHistory();			
+				$oh->id_order = $id_order;					
+				$oh->id_employee = 0;
+				$oh->changeIdOrderState($error_state,$id_order);
+				$oh->save();	
+			}
+		}		
+		$ps125_subiektgtapi->unlockOrder($id_order);
 		print_r($result);	
 	}
+	print("Przetworzonych zamówień:".count($orders));
 ?>

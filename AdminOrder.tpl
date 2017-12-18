@@ -13,9 +13,15 @@
 		{else} <span style="font-weight: bold;color:red;">NIE</span> 
 	{/if}
 </div>
+<div>Pobrano dokument sprzedaży: 
+	{if $gtState.gt_sell_pdf_request == 1} 
+			<span style="font-weight: bold;color:green;">TAK</span> <a href="{$module_path}selldoc_pdf.php?id_order={$id_order}">PDF</a>
+		{else} <span style="font-weight: bold;color:red;">NIE</span> 
+	{/if}
+</div>
 <div>Wysłany dokument do klienta: 
-	{if $gtState.customer_sell_doc_sent == 1} 
-			<span style="font-weight: bold;color:green;">TAK</span> PDF
+	{if $gtState.email_sell_pdf_sent == 1} 
+			<span style="font-weight: bold;color:green;">TAK</span>
 		{else} <span style="font-weight: bold;color:red;">NIE</span> 
 	{/if}
 </div>
