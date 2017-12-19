@@ -351,7 +351,7 @@ class Ps125_SubiektGT_Api extends Module {
 			$address = new Address($order_obj->id_address_delivery);
 			$customer = new Customer($order_obj->id_customer);
 			
-			$orders[$o['id_order']]['doc_file_pdf'] = $o['doc_file_pdf'];
+			$orders[$o['id_order']]['file_name'] = $o['doc_file_pdf'];
 			$orders[$o['id_order']]['email'] = $customer->email;
 			$orders[$o['id_order']]['firstname'] = $customer->firstname;
 			$orders[$o['id_order']]['lastname'] = $customer->lastname;
@@ -375,6 +375,82 @@ class Ps125_SubiektGT_Api extends Module {
 		}
 		return true;
 	}
+
+
+	public function sendEmailWithBill($order_data){
+		include_once(_PS_SWIFT_DIR_.'Swift.php');
+		include_once(_PS_SWIFT_DIR_.'Swift/Connection/SMTP.php');
+		include_once(_PS_SWIFT_DIR_.'Swift/Connection/NativeMail.php');
+		include_once(_PS_SWIFT_DIR_.'Swift/Plugin/Decorator.php');
+		try{
+			
+			$configuration = Configuration::getMultiple(array('PS_SHOP_EMAIL', 'PS_MAIL_METHOD', 'PS_MAIL_SERVER', 'PS_MAIL_USER', 'PS_MAIL_PASSWD', 'PS_SHOP_NAME', 'PS_MAIL_SMTP_ENCRYPTION', 'PS_MAIL_SMTP_PORT', 'PS_MAIL_METHOD', 'PS_MAIL_TYPE'));
+			$message = '';
+			if (intval($configuration['PS_MAIL_METHOD']) == 2)
+			{
+				$connection = new Swift_Connection_SMTP($configuration['PS_MAIL_SERVER'], $configuration['PS_MAIL_SMTP_PORT'], ($configuration['PS_MAIL_SMTP_ENCRYPTION'] == "ssl") ? Swift_Connection_SMTP::ENC_SSL : (($configuration['PS_MAIL_SMTP_ENCRYPTION'] == "tls") ? Swift_Connection_SMTP::ENC_TLS : Swift_Connection_SMTP::ENC_OFF));
+				$connection->setTimeout(10);
+				if (!$connection)
+					return false;
+				if (!empty($configuration['PS_MAIL_USER']) AND !empty($configuration['PS_MAIL_PASSWD']))
+				{
+					$connection->setUsername($configuration['PS_MAIL_USER']);
+					$connection->setPassword($configuration['PS_MAIL_PASSWD']);
+				}
+			}
+			else
+				$connection = new Swift_Connection_NativeMail();
+
+			if (!$connection)
+				return false;
+			$swift = new Swift($connection);
+
+
+			$from = $configuration['PS_SHOP_EMAIL'];
+			$fromName = $configuration['PS_SHOP_NAME'];
+			$templateHtml = file_get_contents(dirname(__FILE__).'/message_tpl/bill_pdf.html');			
+			$subject = "Dziękujemy za zakupy w Outdoorzy.pl";
+			$to = $order_data['email'];
+			$to_plugin = $to;
+
+			/* Create mail and attach differents parts */
+			$message = new Swift_Message($subject);
+
+			foreach($order_data as $key=>$value){
+				$templateVars["{$key}"] = $value;
+			}
+						
+			$templateVars['{shop_name}'] = Configuration::get('PS_SHOP_NAME');
+			$templateVars['{shop_url}'] = 'http://'.htmlspecialchars($_SERVER['HTTP_HOST'], ENT_COMPAT, 'UTF-8').__PS_BASE_URI__;
+			$swift->attachPlugin(new Swift_Plugin_Decorator(array($to_plugin => $templateVars)), 'decorator');
+
+			$message->attach(new Swift_Message_Part($templateHtml, 'text/html', '8bit', 'utf-8'));
+
+
+
+			$fileAttachment['content'] = file_get_contents($this->pdfs_directory.'/'.$order_data['file_name']);
+			$fileAttachment['name'] = $order_data['file_name'];
+			$fileAttachment['mime'] = 'application/pdf';
+
+			if ($fileAttachment AND isset($fileAttachment['content']) AND isset($fileAttachment['name']) AND isset($fileAttachment['mime']))
+				$message->attach(new Swift_Message_Attachment($fileAttachment['content'], $fileAttachment['name'], $fileAttachment['mime']));
+			/* Send mail */
+			$send = $swift->send($message, $to, new Swift_Address($from, $fromName));
+			$swift->disconnect();
+			return $send;
+			}catch(Exception $e){
+				error_log($e->getMessage());
+				error_log($e->getFile());
+				error_log($e->getTraceAsString());
+				error_log($e->getCode());
+				error_log($e->getLine());
+				error_log(var_export($message,true));
+				var_dump($e->getMessage());
+				return false;
+			}
+		return false;
+	}
+
 
 	public function setGetPdf($id_order,$filename){
 		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_pdf_request = 1, upd_date = NOW(),gt_order_ref = \''.$filename.'\' WHERE id_order = '.$id_order;
@@ -407,6 +483,9 @@ class Ps125_SubiektGT_Api extends Module {
 			case _PS_OS_SHIPPING_:
 					$unlockOrder = true;			
 				break;							
+			case _PS_OS_DELIVERED_:
+					$unlockOrder = true;			
+				break;							
 		}
 		
 		if($unlockOrder){
@@ -425,6 +504,11 @@ class Ps125_SubiektGT_Api extends Module {
 
 	static public function setSentSellDocToSubiekt($id_order,$ref_order){
 		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_doc_sent = 1, upd_date = NOW(),gt_sell_doc_ref = \''.$ref_order.'\' WHERE id_order = '.$id_order;
+		return DB::getInstance()->Execute($DML);
+	}
+
+	static public function setSentDocSellToClient($id_order){
+		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET email_sell_pdf_sent = 1, upd_date = NOW() WHERE id_order = '.$id_order;
 		return DB::getInstance()->Execute($DML);
 	}
 
