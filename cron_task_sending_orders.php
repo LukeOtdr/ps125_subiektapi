@@ -1,7 +1,7 @@
 <?php
 	
-	require_once('../../config/config.inc.php');
-	require_once('../../init.php');
+	require_once(dirname(__FILE__).'/../../config/config.inc.php');
+	require_once(dirname(__FILE__).'/../../init.php');
 	require_once('ps125_subiektgt_api.php');
 	require_once('SubiektApi.php');
 	$ps125_subiektgtapi = new Ps125_SubiektGT_Api();
@@ -14,6 +14,7 @@
 		$ps125_subiektgtapi->lockOrder($id_order);
 		try{
 			$result = $subiektapi->call('order/add',$o);
+			var_dump($result);
 			if(is_array($result)){
 				$ps125_subiektgtapi->logEvent($id_order,'gt_order_sent',$result['state'],isset($result['message'])?$result['message']:json_encode($result['data']));		
 				if($result['state'] == 'fail'){

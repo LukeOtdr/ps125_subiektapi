@@ -246,7 +246,7 @@ class Ps125_SubiektGT_Api extends Module {
 	}
 
 	public function getOrdersToSend(){
-		$SQL = 'SELECT id_order FROM '._DB_PREFIX_.'subiektgt_api WHERE gt_order_sent = 0 AND is_locked = 0 LIMIT 50;';
+		$SQL = 'SELECT id_order FROM '._DB_PREFIX_.'subiektgt_api WHERE gt_order_sent = 0 AND is_locked = 0 LIMIT 10;';
 		$orders = array();
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -281,8 +281,7 @@ class Ps125_SubiektGT_Api extends Module {
 			$orders[$order['id_order']]['products'] = array();
 			foreach($products as $p){
 				$price = round($p['product_price']*(1+0.01*$p['tax_rate']),2);				
-				$a_p = array(
-						'ean'=>$p['product_ean13'],
+				$a_p = array(						
 						'code'=>$p['product_ean13'],
 						'qty'=> $p['product_quantity'],
 						'price' => $price,
@@ -314,7 +313,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order,gt_order_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 AND is_locked = 0 
 				AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)
-				LIMIT 50;';
+				LIMIT 10;';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -328,7 +327,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order, gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 				
-				LIMIT 50;';
+				LIMIT 10;';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -342,7 +341,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order, doc_file_pdf FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 1 AND email_sell_pdf_sent = 0 AND is_locked = 0 				
-				LIMIT 50;';
+				LIMIT 10;';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $o){				

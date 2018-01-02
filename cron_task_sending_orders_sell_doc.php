@@ -1,7 +1,7 @@
 <?php
 	
-	require_once('../../config/config.inc.php');
-	require_once('../../init.php');
+	require_once(dirname(__FILE__).'/../../config/config.inc.php');
+	require_once(dirname(__FILE__).'/../../init.php');
 	require_once('ps125_subiektgt_api.php');
 	require_once('SubiektApi.php');
 	$ps125_subiektgtapi = new Ps125_SubiektGT_Api();
