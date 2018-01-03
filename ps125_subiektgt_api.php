@@ -280,6 +280,7 @@ class Ps125_SubiektGT_Api extends Module {
 							'phone' => $address->phone_mobile,
 							'ref_id' => $this->order_prefix.'CUST '.$customer->id,
 							'is_company' => strlen($address->tax_identity)>0:true:false,
+							'company_name' => $address->company,
 							'tax_id' => strlen($address->tax_identity)>0:$address->tax_identity:'',
 						),
 
