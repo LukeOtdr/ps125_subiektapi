@@ -253,13 +253,18 @@ class Ps125_SubiektGT_Api extends Module {
 			//$order = new Or			
 			$order_obj = new Order($order['id_order']);
 			$products = $order_obj->getProductsDetail();
-			$address = new Address($order_obj->id_address_delivery);
+			$address = false;
+			if($order_obj->id_address_delivery!=$order_obj->id_adress_invoice){
+				$address = new Address($order_obj->id_adress_invoice);
+			}else{
+				$address = new Address($order_obj->id_address_delivery);
+			}
 			$customer = new Customer($order_obj->id_customer);
 			$carrier = new Carrier($order_obj->id_carrier);
 			$messages = Message::getMessagesByOrderId($order_obj->id,true);
 			$count_msg = count($messages);
 			$orders[$order['id_order']] = array(
-						'comments' => "Płatność: ".$order_obj->payment.", Wysyłka: ".$carrier->name.", Komentarze do zam.".$count_msg,
+						'comments' => "Płatność: ".$order_obj->payment.", Wysyłka: ".$carrier->name.($count_msg>0?", Komentarze do zam.".$count_msg:''),
 						'reference' => $this->order_prefix.' '.$order_obj->id,
 						'create_product_if_not_exists' => $this->auto_create_products,
 						'amount' => $order_obj->total_paid_real,
@@ -274,7 +279,8 @@ class Ps125_SubiektGT_Api extends Module {
 							'post_code' => $address->postcode,
 							'phone' => $address->phone_mobile,
 							'ref_id' => $this->order_prefix.'CUST '.$customer->id,
-							//'is_company' => 
+							'is_company' => strlen($address->tax_identity)>0:true:false,
+							'tax_id' => strlen($address->tax_identity)>0:$address->tax_identity:'',
 						),
 
 			);
