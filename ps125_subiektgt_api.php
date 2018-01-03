@@ -282,7 +282,8 @@ class Ps125_SubiektGT_Api extends Module {
 			foreach($products as $p){
 				$price = round($p['product_price']*(1+0.01*$p['tax_rate']),2);				
 				$a_p = array(						
-						'code'=>$p['product_ean13'],
+						//'ean'=>$p['product_ean13'],
+						'code'=>strlen($p['product_ean13'])>0?$p['product_ean13']:$p['product_reference'],
 						'qty'=> $p['product_quantity'],
 						'price' => $price,
 						'price_before_discount' => $price,
