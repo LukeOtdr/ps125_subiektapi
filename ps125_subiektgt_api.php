@@ -246,16 +246,16 @@ class Ps125_SubiektGT_Api extends Module {
 	}
 
 	public function getOrdersToSend(){
-		$SQL = 'SELECT id_order FROM '._DB_PREFIX_.'subiektgt_api WHERE gt_order_sent = 0 AND is_locked = 0 LIMIT 10;';
+		$SQL = 'SELECT id_order FROM '._DB_PREFIX_.'subiektgt_api WHERE gt_order_sent = 0 AND is_locked = 0 LIMIT 20;';
 		$orders = array();
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
 			//$order = new Or			
 			$order_obj = new Order($order['id_order']);
 			$products = $order_obj->getProductsDetail();
-			$address = false;
-			if($order_obj->id_address_delivery!=$order_obj->id_adress_invoice){
-				$address = new Address($order_obj->id_adress_invoice);
+			$address = false;			
+			if($order_obj->id_address_delivery!=$order_obj->id_address_delivery){
+				$address = new Address($order_obj->id_address_delivery);
 			}else{
 				$address = new Address($order_obj->id_address_delivery);
 			}
@@ -267,7 +267,7 @@ class Ps125_SubiektGT_Api extends Module {
 						'comments' => "Płatność: ".$order_obj->payment.", Wysyłka: ".$carrier->name.($count_msg>0?", Komentarze do zam.".$count_msg:''),
 						'reference' => $this->order_prefix.' '.$order_obj->id,
 						'create_product_if_not_exists' => $this->auto_create_products,
-						'amount' => $order_obj->total_paid_real,
+						'amount' => round($order_obj->total_paid_real,2),
 						'pay_type' => 'transfer', // 'cart','money','credit'
 						'customer'=>array(
 							'firstname' => $address->firstname,
@@ -279,9 +279,9 @@ class Ps125_SubiektGT_Api extends Module {
 							'post_code' => $address->postcode,
 							'phone' => $address->phone_mobile,
 							'ref_id' => $this->order_prefix.'CUST '.$customer->id,
-							'is_company' => strlen($address->tax_identity)>0:true:false,
+							'is_company' => strlen($address->tax_identity)>0?true:false,
 							'company_name' => $address->company,
-							'tax_id' => strlen($address->tax_identity)>0:$address->tax_identity:'',
+							'tax_id' => strlen($address->tax_identity)>0?$address->tax_identity:'',
 						),
 
 			);
@@ -290,7 +290,7 @@ class Ps125_SubiektGT_Api extends Module {
 				$price = round($p['product_price']*(1+0.01*$p['tax_rate']),2);				
 				$a_p = array(						
 						//'ean'=>$p['product_ean13'],
-						'code'=>strlen($p['product_ean13'])>0?$p['product_ean13']:$p['product_reference'],
+						'code'=>strlen($p['product_ean13'])>0?$p['product_ean13']:$p['product_supplier_reference'],
 						'qty'=> $p['product_quantity'],
 						'price' => $price,
 						'price_before_discount' => $price,
@@ -321,7 +321,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order,gt_order_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 AND is_locked = 0 
 				AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)
-				LIMIT 10;';
+				LIMIT 20;';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -335,7 +335,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order, gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 				
-				LIMIT 10;';
+				LIMIT 20;';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -349,7 +349,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order, doc_file_pdf FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 1 AND email_sell_pdf_sent = 0 AND is_locked = 0 				
-				LIMIT 10;';
+				LIMIT 20;';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $o){				
