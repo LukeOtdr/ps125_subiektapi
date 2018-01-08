@@ -13,8 +13,7 @@
 		$fail = false;
 		$ps125_subiektgtapi->lockOrder($id_order);
 		try{
-			$result = $subiektapi->call('order/add',$o);
-			var_dump($result);
+			$result = $subiektapi->call('order/add',$o);			
 			if(is_array($result)){
 				$ps125_subiektgtapi->logEvent($id_order,'gt_order_sent',$result['state'],isset($result['message'])?$result['message']:json_encode($result['data']));		
 				if($result['state'] == 'fail'){
@@ -43,5 +42,5 @@
 		$ps125_subiektgtapi->unlockOrder($id_order);
 		print_r($result);	
 	}
-	print("Przetworzonych zamówień:".count($orders));
+	print("Przetworzonych zamówień:".count($orders)."\n");
 ?>

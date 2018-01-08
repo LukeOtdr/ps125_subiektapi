@@ -334,7 +334,8 @@ class Ps125_SubiektGT_Api extends Module {
 	public function getOrdersToSendBills(){
 		$SQL = 'SELECT id_order, gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
-				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 				
+				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 	
+				AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)			
 				LIMIT 20;';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
@@ -460,7 +461,7 @@ class Ps125_SubiektGT_Api extends Module {
 
 
 	public function setGetPdf($id_order,$filename){
-		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_pdf_request = 1, upd_date = NOW(),gt_order_ref = \''.$filename.'\' WHERE id_order = '.$id_order;
+		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_pdf_request = 1, upd_date = NOW(),	doc_file_pdf = \''.$filename.'\' WHERE id_order = '.$id_order;
 		return DB::getInstance()->Execute($DML);
 	}
 

@@ -44,5 +44,5 @@
 		$ps125_subiektgtapi->unlockOrder($id_order);
 		print_r($result);	
 	}
-	print("Przetworzonych zamówień:".count($orders));
+	print("Przetworzonych zamówień:".count($orders)."\n");
 ?>

@@ -20,7 +20,7 @@
 					$fail = true;
 				}else{					
 					$pdf_result = false;
-					if($result['data']['doc_type'] == 'PA' && $result['data']['fiscal_state'] == 1 || true){
+					if($result['data']['doc_type'] == 'PA' && $result['data']['fiscal_state'] == 1){
 						
 						$pdf_result = $subiektapi->call('document/getpdf',$o);
 					}elseif($result['data']['doc_type'] == 'FS'){
@@ -45,7 +45,7 @@
 			$fail = true;
 		}
 	
-		if($fali){
+		if($fail){
 			$error_state = $ps125_subiektgtapi->getErrorOrderState();
 			if($error_state>0){
 				$oh = new OrderHistory();			
@@ -58,5 +58,5 @@
 		//$ps125_subiektgtapi->unlockOrder($id_order);
 		print_r($result);	
 	}
-	print("Przetworzonych zamówień:".count($orders));
+	print("Przetworzonych zamówień:".count($orders)."\n");
 ?>
