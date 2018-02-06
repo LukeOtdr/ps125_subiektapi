@@ -16,7 +16,11 @@
 			$result = $subiektapi->call('order/makesaledoc',$o);			
 			if(is_array($result)){
 				$ps125_subiektgtapi->logEvent($id_order,'gt_sell_doc_sent',$result['state'],isset($result['message'])?$result['message']:json_encode($result['data']));		
-				if($result['state'] == 'fail'){
+				if($result['state'] == 'fail' && $result['message']=='Nie można utworzyć dokumentu sprzedaży. Brakuje produktów na magazynie!'){
+					$ps125_subiektgtapi->unlockOrder($id_order);
+					print_r($result);	
+					continue;
+				}elseif($result['state'] == 'fail'){
 					$fail = true;
 				}
 			}else{
@@ -36,6 +40,8 @@
 				$oh->id_employee = 0;
 				$oh->changeIdOrderState($docsell_state,$id_order);
 				$oh->save();	
+			}else{
+
 			}
 
 		}else{				

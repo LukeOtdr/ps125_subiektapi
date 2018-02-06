@@ -293,6 +293,7 @@ class Ps125_SubiektGT_Api extends Module {
 						'code'=>strlen($p['product_ean13'])>0?$p['product_ean13']:$p['product_supplier_reference'],
 						'qty'=> $p['product_quantity'],
 						'price' => $price,
+						'supplier_code' => $p['product_supplier_reference'],
 						'price_before_discount' => $price,
 						'name' => $p['product_name'],
 						'id_store' => $this->store_id,
@@ -344,6 +345,21 @@ class Ps125_SubiektGT_Api extends Module {
 		}			
 		return $orders;
 	}
+
+	public function getOrdersToCheckState(){
+		$SQL = 'SELECT id_order, gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
+				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
+				AND 	gt_sell_pdf_request  = 0 AND is_locked = 1 	
+				AND upd_date>ADDDATE(NOW(), INTERVAL -60 MINUTE)
+				LIMIT 20;';
+		$orders = array();		
+		$order_to_send = DB::getInstance()->ExecuteS($SQL);
+		foreach($order_to_send as $order){
+			$orders[$order['id_order']]['doc_ref'] = $order['gt_sell_doc_ref'];
+		}			
+		return $orders;
+	}
+
 
 
 	public function getOrdersReadyToSendBills(){
@@ -509,6 +525,11 @@ class Ps125_SubiektGT_Api extends Module {
 		return DB::getInstance()->Execute($DML);
 	}
 
+
+	static public function setRemoveDocSell($id_order,$ref_order){
+		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_doc_sent = 0,email_sell_pdf_sent = 0,gt_sell_pdf_request = 0, upd_date = NOW(),gt_sell_doc_ref = \'\' WHERE id_order = '.$id_order;
+		return DB::getInstance()->Execute($DML);
+	}
 
 	static public function setSentSellDocToSubiekt($id_order,$ref_order){
 		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_doc_sent = 1, upd_date = NOW(),gt_sell_doc_ref = \''.$ref_order.'\' WHERE id_order = '.$id_order;
