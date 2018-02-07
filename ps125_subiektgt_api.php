@@ -365,7 +365,7 @@ class Ps125_SubiektGT_Api extends Module {
 	public function getOrdersToCheckState(){
 		$SQL = 'SELECT id_order, gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
-				AND 	gt_sell_pdf_request  = 0 AND is_locked = 1 	
+				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 	
 				AND upd_date>ADDDATE(NOW(), INTERVAL -60 MINUTE)
 				LIMIT 100';
 		$orders = array();		
@@ -527,8 +527,11 @@ class Ps125_SubiektGT_Api extends Module {
 					$unlockOrder = true;			
 				break;	
 			case $this->unlock_state:
-				$unlockOrder = true;
-				break;						
+					$unlockOrder = true;
+				break;	
+			case $this->docsell_state:
+					$unlockOrder = true;
+				break;									
 		}
 		
 		if($unlockOrder){
@@ -582,7 +585,7 @@ class Ps125_SubiektGT_Api extends Module {
 		
 		 $smarty->assign(array(
 		 	'module_path' => _MODULE_DIR_.$this->name.'/',
-		 	'id_order' => $params['id_order'],
+		 	'id_order' => $params['id_order'],		 	
 		 	'gtState' => $gt_state,
 		 	'logs' => $logs
 		// 		'arrayProducts' => $arrayProducts

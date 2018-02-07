@@ -15,7 +15,7 @@
 </div>
 <div>Pobrano dokument sprzedaży: 
 	{if $gtState.gt_sell_pdf_request == 1} 
-			<span style="font-weight: bold;color:green;">TAK</span> <a href="{$module_path}selldoc_pdf.php?id_order={$id_order}">PDF</a>
+			<span style="font-weight: bold;color:green;">TAK</span> <a href="{$module_path}selldoc_pdf.php?id_order={$id_order}"><img src="/img/t/AdminPDF.gif" /> {$gtState.doc_file_pdf}</a>
 		{else} <span style="font-weight: bold;color:red;">NIE</span> 
 	{/if}
 </div>
