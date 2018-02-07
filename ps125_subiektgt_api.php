@@ -8,6 +8,7 @@ class Ps125_SubiektGT_Api extends Module {
 	private $order_prefix = '';
 	private $error_state = 0;
 	private $docsell_state = 0;
+	private $unlock_state = 0;
 	private $code_ship_cost = '';
 	private $pdfs_directory = '';
 
@@ -32,6 +33,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$this->order_prefix = Configuration::get('SUBIEKTGT_API_ORDER_PREFIX');	
 		$this->error_state = Configuration::get('SUBIEKTGT_API_ERROR_STATE');	
 		$this->docsell_state = Configuration::get('SUBIEKTGT_API_DOCSELL_STATE');	
+		$this->unlock_state = Configuration::get('SUBIEKTGT_API_UNLOCK_STATE');
 		$this->code_ship_cost = Configuration::get('SUBIEKTGT_API_CODE_SHIPCOST');					
 		$this->pdfs_directory = Configuration::get('SUBIEKTGT_API_PDFS_DIR');	
 	}
@@ -121,6 +123,9 @@ class Ps125_SubiektGT_Api extends Module {
 			Configuration::updateValue('SUBIEKTGT_API_ERROR_STATE', Tools::getValue('SUBIEKTGT_API_ERROR_STATE'));
 			$this->error_state = Tools::getValue('SUBIEKTGT_API_ERROR_STATE');
 
+			Configuration::updateValue('SUBIEKTGT_API_UNLOCK_STATE', Tools::getValue('SUBIEKTGT_API_UNLOCK_STATE'));
+			$this->unlock_state = Tools::getValue('SUBIEKTGT_API_UNLOCK_STATE');
+
 			Configuration::updateValue('SUBIEKTGT_API_DOCSELL_STATE', Tools::getValue('SUBIEKTGT_API_DOCSELL_STATE'));
 			$this->docsell_state = Tools::getValue('SUBIEKTGT_API_DOCSELL_STATE');
 
@@ -198,7 +203,18 @@ class Ps125_SubiektGT_Api extends Module {
 						$this->_html.= "<option value=\"{$os['id_order_state']}\" ".($this->docsell_state == $os['id_order_state']?"selected":"").">{$os['name']}</option>";
 					}
 	$this->_html .='</select>
-				</div>				
+				</div>	
+				<label style="width:350px;">Zmień status odblokowujące przetwarzanie:</label>				
+				<div style="margin-left:400px;margin-bottom:30px;margin-top:5px;">
+					<select name="SUBIEKTGT_API_UNLOCK_STATE">
+					<option value="0" selected>-- nie zmieniaj --</option>
+					';
+					foreach($order_states as $os){
+						$this->_html.= "<option value=\"{$os['id_order_state']}\" ".($this->unlock_state == $os['id_order_state']?"selected":"").">{$os['name']}</option>";
+					}
+	$this->_html .='</select>	
+				</div>
+
 				<label style="width:350px;">Autmatycznie tworzyć nowe produkty</label>
 				<div style="margin-left:400px;margin-bottom:5px;margin-top:5px;margin-bottom:30px;"><input name="SUBIEKTGT_API_AUTO_CREATE_PRO" type="radio" value="1" '.(1==intval($this->auto_create_products)?'checked':'').'> Tak
 					<input name="SUBIEKTGT_API_AUTO_CREATE_PRO" type="radio" value="0" '.(0==intval($this->auto_create_products)?'checked':'').'> Nie
@@ -293,7 +309,7 @@ class Ps125_SubiektGT_Api extends Module {
 						'code'=>strlen($p['product_ean13'])>0?$p['product_ean13']:$p['product_supplier_reference'],
 						'qty'=> $p['product_quantity'],
 						'price' => $price,
-						'supplier_code' => $p['product_supplier_reference'],
+						'supplier_code' => strlen($p['product_supplier_reference'])>0?$p['product_supplier_reference']:$p['product_reference'],
 						'price_before_discount' => $price,
 						'name' => $p['product_name'],
 						'id_store' => $this->store_id,
@@ -322,7 +338,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order,gt_order_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 AND is_locked = 0 
 				AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)
-				LIMIT 20;';
+				LIMIT 100';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -337,7 +353,7 @@ class Ps125_SubiektGT_Api extends Module {
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 	
 				AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)			
-				LIMIT 20;';
+				LIMIT 100';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -351,7 +367,7 @@ class Ps125_SubiektGT_Api extends Module {
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 0 AND is_locked = 1 	
 				AND upd_date>ADDDATE(NOW(), INTERVAL -60 MINUTE)
-				LIMIT 20;';
+				LIMIT 100';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -366,7 +382,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order, doc_file_pdf FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 1 AND email_sell_pdf_sent = 0 AND is_locked = 0 				
-				LIMIT 20;';
+				LIMIT 100';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $o){				
@@ -509,7 +525,10 @@ class Ps125_SubiektGT_Api extends Module {
 				break;							
 			case _PS_OS_DELIVERED_:
 					$unlockOrder = true;			
-				break;							
+				break;	
+			case $this->unlock_state:
+				$unlockOrder = true;
+				break;						
 		}
 		
 		if($unlockOrder){
