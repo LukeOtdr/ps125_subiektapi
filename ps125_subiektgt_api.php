@@ -280,7 +280,7 @@ class Ps125_SubiektGT_Api extends Module {
 			$messages = Message::getMessagesByOrderId($order_obj->id,true);
 			$count_msg = count($messages);
 			$orders[$order['id_order']] = array(
-						'comments' => "Płatność: ".$order_obj->payment.", Wysyłka: ".$carrier->name.($count_msg>0?", Komentarze do zam.".$count_msg:''),
+						'comments' => "Wysyłka: ".$carrier->name.", Płatność: ".$order_obj->payment.", ".($count_msg>0?", Komentarze do zam.".$count_msg:''),
 						'reference' => $this->order_prefix.' '.$order_obj->id,
 						'create_product_if_not_exists' => $this->auto_create_products,
 						'amount' => round($order_obj->total_paid_real,2),

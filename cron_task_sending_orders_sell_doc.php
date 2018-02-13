@@ -16,11 +16,7 @@
 			$result = $subiektapi->call('order/makesaledoc',$o);			
 			if(is_array($result)){
 				$ps125_subiektgtapi->logEvent($id_order,'gt_sell_doc_sent',$result['state'],isset($result['message'])?$result['message']:json_encode($result['data']));		
-				if($result['state'] == 'fail' && $result['message']=='Nie można utworzyć dokumentu sprzedaży. Brakuje produktów na magazynie!'){
-					$ps125_subiektgtapi->unlockOrder($id_order);
-					print_r($result);	
-					continue;
-				}elseif($result['state'] == 'fail'){
+				if($result['state'] == 'fail'){
 					$fail = true;
 				}
 			}else{
@@ -32,18 +28,18 @@
 			$fail = true;
 		}
 		if(!$fail){			
-			$ps125_subiektgtapi->setSentSellDocToSubiekt($id_order,$result['data']['doc_ref']);
-			$docsell_state = $ps125_subiektgtapi->getDocSellState();
-			if($docsell_state>0){
-				$oh = new OrderHistory();			
-				$oh->id_order = $id_order;					
-				$oh->id_employee = 0;
-				$oh->changeIdOrderState($docsell_state,$id_order);
-				$oh->save();	
+			if(isset($result['data']['doc_status']) && $result['data']['doc_status']=='warning'){
 			}else{
-
+				$ps125_subiektgtapi->setSentSellDocToSubiekt($id_order,$result['data']['doc_ref']);
+				$docsell_state = $ps125_subiektgtapi->getDocSellState();
+				if($docsell_state>0){
+					$oh = new OrderHistory();			
+					$oh->id_order = $id_order;					
+					$oh->id_employee = 0;
+					$oh->changeIdOrderState($docsell_state,$id_order);
+					$oh->save();	
+				}
 			}
-
 		}else{				
 			$error_state = $ps125_subiektgtapi->getErrorOrderState();
 			if($error_state>0){
