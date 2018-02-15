@@ -16,9 +16,12 @@
 			if(is_array($result)){				
 				if($result['state'] == 'fail'){
 					$fail = true;
-				}elseif($result['data']['is_exists']==false){
-					$ps125_subiektgtapi->logEvent($id_order,'gt_check_doc_sell_status',$result['state'],'Dokument sprzedaży usunięty');		
-					$ps125_subiektgtapi->setRemoveDocSell($id_order);
+				}else{
+
+					if($result['data']['is_exists']==false){
+						$ps125_subiektgtapi->logEvent($id_order,'gt_check_doc_sell_status',$result['state'],'Dokument sprzedaży usunięty');		
+						$ps125_subiektgtapi->setRemoveDocSell($id_order);
+					}
 				}
 			}else{
 				$ps125_subiektgtapi->logEvent($id_order,'gt_check_sell_doc','fail','Check server API logs!');			

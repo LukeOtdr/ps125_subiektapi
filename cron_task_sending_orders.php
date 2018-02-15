@@ -15,9 +15,19 @@
 		try{
 			$result = $subiektapi->call('order/add',$o);			
 			if(is_array($result)){
-				$ps125_subiektgtapi->logEvent($id_order,'gt_order_sent',$result['state'],isset($result['message'])?$result['message']:json_encode($result['data']));		
+				$ps125_subiektgtapi->logEvent($id_order,'gt_order_sent',$result['state'],isset($result['message'])?$result['message']:json_encode($result['data']));
 				if($result['state'] == 'fail'){
 					$fail = true;
+				}else{
+					//zmiana statusu zamówienia na kompletowanie zamówienia. Jeśli zaakceptowana płatność.
+					$order_state = OrderHistory::getLastOrderState($id_order)->id;
+					if($order_state == _PS_OS_PAYMENT_){
+						$oh = new OrderHistory();			
+						$oh->id_order = $id_order;					
+						$oh->id_employee = 0;
+						$oh->changeIdOrderState(_PS_OS_PREPARATION_,$id_order);
+						$oh->save();
+					}
 				}
 			}else{
 				$ps125_subiektgtapi->logEvent($id_order,'gt_order_sent','fail','Check server API logs!');			

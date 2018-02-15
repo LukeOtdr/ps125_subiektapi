@@ -28,9 +28,19 @@
 			$fail = true;
 		}
 		if(!$fail){			
-			if(isset($result['data']['doc_status']) && $result['data']['doc_status']=='warning'){
+			if(isset($result['data']['doc_state']) && $result['data']['doc_state']=='warning'){
 			}else{
 				$ps125_subiektgtapi->setSentSellDocToSubiekt($id_order,$result['data']['doc_ref']);
+
+				$order_state = OrderHistory::getLastOrderState($id_order)->id;
+				if($order_state == _PS_OS_PAYMENT_){
+					$oh = new OrderHistory();			
+					$oh->id_order = $id_order;					
+					$oh->id_employee = 0;
+					$oh->changeIdOrderState(_PS_OS_PREPARATION_,$id_order);
+					$oh->save();
+				}
+
 				$docsell_state = $ps125_subiektgtapi->getDocSellState();
 				if($docsell_state>0){
 					$oh = new OrderHistory();			

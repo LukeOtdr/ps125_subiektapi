@@ -520,12 +520,6 @@ class Ps125_SubiektGT_Api extends Module {
 			case _PS_OS_PREPARATION_:
 					$unlockOrder = true;
 				break;
-			case _PS_OS_SHIPPING_:
-					$unlockOrder = true;			
-				break;							
-			case _PS_OS_DELIVERED_:
-					$unlockOrder = true;			
-				break;	
 			case $this->unlock_state:
 					$unlockOrder = true;
 				break;	
