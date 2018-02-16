@@ -393,7 +393,7 @@ class Ps125_SubiektGT_Api extends Module {
 			
 			$orders[$o['id_order']]['file_name'] = $o['doc_file_pdf'];
 			$orders[$o['id_order']]['email'] = $customer->email;
-			$orders[$o['id_order']]['firstname'] = $customer->firstname;
+			$orders[$o['id_order']]['firstname'] = trim($customer->firstname);
 			$orders[$o['id_order']]['lastname'] = $customer->lastname;
 			$orders[$o['id_order']]['id_order'] = $order_obj->id;
 			$orders[$o['id_order']]['add_date'] = $order_obj->date_add;
@@ -418,6 +418,7 @@ class Ps125_SubiektGT_Api extends Module {
 
 
 	public function sendEmailWithBill($order_data){
+		//$order_data['email'] = 'lukasz.golonka@gmail.com';
 		include_once(_PS_SWIFT_DIR_.'Swift.php');
 		include_once(_PS_SWIFT_DIR_.'Swift/Connection/SMTP.php');
 		include_once(_PS_SWIFT_DIR_.'Swift/Connection/NativeMail.php');

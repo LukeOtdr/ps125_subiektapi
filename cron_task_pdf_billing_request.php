@@ -19,9 +19,8 @@
 				if($result['state'] == 'fail'){
 					$fail = true;
 				}else{					
-					$pdf_result = false;
-					if($result['data']['doc_type'] == 'PA' && $result['data']['fiscal_state'] == 1){
-						
+					$pdf_result = true;
+					if($result['data']['doc_type'] == 'PA' && $result['data']['fiscal_state'] == 1){						
 						$pdf_result = $subiektapi->call('document/getpdf',$o);
 					}elseif($result['data']['doc_type'] == 'FS'){
 						$pdf_result = $subiektapi->call('document/getpdf',$o);
@@ -31,10 +30,10 @@
 						if($ps125_subiektgtapi->savePdf($pdf_result,$id_order)){
 							$ps125_subiektgtapi->setGetPdf($id_order,$pdf_result['data']['file_name']);							
 						}
-					}else{
+					}elseif(!$pdf_result){
 						$fail = true;
 					}
-					$ps125_subiektgtapi->logEvent($id_order,'gt_pdf_billing_request',$result['state'],isset($result['message'])?$result['message']:$result['data']['doc_ref']);
+					$ps125_subiektgtapi->logEvent($id_order,'gt_pdf_billing_request_2',$result['state'],isset($result['message'])?$result['message']:$result['data']['doc_ref']);
 				}
 			}else{
 				$ps125_subiektgtapi->logEvent($id_order,'pdf_billing_request','fail','Check server API logs!');			
