@@ -20,10 +20,8 @@
 					$fail = true;
 				}else{					
 					$pdf_result = true;
-					if($result['data']['doc_type'] == 'PA' && $result['data']['fiscal_state'] == 1){						
-						$pdf_result = $subiektapi->call('document/getpdf',$o);
-					}elseif($result['data']['doc_type'] == 'FS'){
-						$pdf_result = $subiektapi->call('document/getpdf',$o);
+					if($result['data']['id_flag'] == 1010 || $result['data']['id_flag'] == 1006){						
+						$pdf_result = $subiektapi->call('document/getpdf',$o);					
 					}
 					//var_Dump($pdf_result);
 					if(is_array($pdf_result) && $result['state'] == 'success'){						

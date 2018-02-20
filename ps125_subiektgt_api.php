@@ -451,7 +451,7 @@ class Ps125_SubiektGT_Api extends Module {
 			$fromName = $configuration['PS_SHOP_NAME'];
 			$templateHtml = file_get_contents(dirname(__FILE__).'/message_tpl/bill_pdf.html');			
 			$subject = "Dziękujemy za zakupy w Outdoorzy.pl";
-			$to = $order_data['email'];
+			$to = $this->emailFix($order_data['email']);
 			$to_plugin = $to;
 
 			/* Create mail and attach differents parts */
