@@ -9,10 +9,10 @@ require_once('ps125_subiektgt_api.php');
 
 $cookie = new Cookie('psAdmin');
 //var_Dump($cookie);
-//if (!$cookie->id_employee){
-//	echo Tools::displayError("You must be logged in!");
-//	exit;
-//}
+if (!$cookie->id_employee){
+	echo Tools::displayError("You must be logged in!");
+	exit;
+}
 
 $ps125_subiektgtapi = new Ps125_SubiektGT_Api();
 $id_order = Tools::getValue('id_order',0);

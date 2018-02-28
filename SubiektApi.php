@@ -18,14 +18,14 @@ class SubiektApi
     /**
      * Call request to api  
      */
-    public function call($method, $args=array(), $timeout = 10){
+    public function call($method, $args=array(), $timeout = 60){
         return $this->makeRequest($method, $args, $timeout);
     }
 
     /**
      * Performs the underlying HTTP request. Not very exciting
      */
-    private function makeRequest($method, $args=array(), $timeout = 10){      
+    private function makeRequest($method, $args=array(), $timeout = 60){      
         $request_data['api_key'] = $this->api_key;
         $request_data['data'] = $args;
         $url = $this->api_endpoint.'/'.$method;

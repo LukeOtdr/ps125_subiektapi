@@ -280,7 +280,7 @@ class Ps125_SubiektGT_Api extends Module {
 			$messages = Message::getMessagesByOrderId($order_obj->id,true);
 			$count_msg = count($messages);
 			$orders[$order['id_order']] = array(
-						'comments' => "Wysyłka: ".$carrier->name.", Płatność: ".$order_obj->payment.", ".($count_msg>0?", Komentarze do zam.".$count_msg:''),
+						'comments' => "Wysyłka: ".$carrier->name.", Płatność: ".$order_obj->payment." ".($count_msg>0?", Komentarze do zam.".$count_msg:''),
 						'reference' => $this->order_prefix.' '.$order_obj->id,
 						'create_product_if_not_exists' => $this->auto_create_products,
 						'amount' => round($order_obj->total_paid_real,2),
@@ -366,7 +366,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order, gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 	
-				AND upd_date>ADDDATE(NOW(), INTERVAL -60 MINUTE)
+				AND upd_date<ADDDATE(NOW(), INTERVAL -30 MINUTE)
 				LIMIT 100';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
@@ -376,6 +376,21 @@ class Ps125_SubiektGT_Api extends Module {
 		return $orders;
 	}
 
+
+	public function getOrdersState(){
+		$SQL = 'SELECT id_order, gt_order_ref,gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
+				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 
+				AND 	gt_sell_pdf_request  = 0 	
+				AND upd_date>ADDDATE(NOW(), INTERVAL -1 HOUR)
+				LIMIT 200';
+		$orders = array();		
+		$order_to_send = DB::getInstance()->ExecuteS($SQL);
+		foreach($order_to_send as $order){
+			$orders[$order['id_order']]['order_ref'] = $order['gt_order_ref'];
+			$orders[$order['id_order']]['doc_ref'] = $order['gt_sell_doc_ref'];
+		}			
+		return $orders;
+	}
 
 
 	public function getOrdersReadyToSendBills(){
@@ -545,6 +560,11 @@ class Ps125_SubiektGT_Api extends Module {
 
 	static public function setRemoveDocSell($id_order,$ref_order){
 		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_doc_sent = 0,email_sell_pdf_sent = 0,gt_sell_pdf_request = 0, upd_date = NOW(),gt_sell_doc_ref = \'\' WHERE id_order = '.$id_order;
+		return DB::getInstance()->Execute($DML);
+	}
+
+	static public function setRemoveOrder($id_order){
+		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_doc_sent = 0,email_sell_pdf_sent = 0,gt_sell_pdf_request = 0, upd_date = NOW(),gt_order_ref = \'\',is_locked = 1 WHERE id_order = '.$id_order;
 		return DB::getInstance()->Execute($DML);
 	}
 

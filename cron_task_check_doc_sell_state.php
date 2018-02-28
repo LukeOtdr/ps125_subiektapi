@@ -21,6 +21,13 @@
 					if($result['data']['is_exists']==false){
 						$ps125_subiektgtapi->logEvent($id_order,'gt_check_doc_sell_status',$result['state'],'Dokument sprzedaży usunięty');		
 						$ps125_subiektgtapi->setRemoveDocSell($id_order);
+					}else{
+						$order_state = OrderHistory::getLastOrderState($id_order)->id;
+						if($order_state == _PS_OS_CANCELED_){
+							$subiektapi->call('document/delete',$o);
+							$ps125_subiektgtapi->setRemoveDocSell($id_order);						
+							$ps125_subiektgtapi->logEvent($id_order,'gt_check_order_state',$result['state'],'Dokument sprzedaży usunięty.');								
+						}
 					}
 				}
 			}else{

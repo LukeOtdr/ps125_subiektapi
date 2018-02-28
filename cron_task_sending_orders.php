@@ -12,6 +12,10 @@
 	foreach($orders as $id_order=>$o){
 		$fail = false;
 		$ps125_subiektgtapi->lockOrder($id_order);
+		$order_state = OrderHistory::getLastOrderState($id_order)->id;
+		if($order_state == _PS_OS_CANCELED_){
+			continue;
+		}
 		try{
 			$result = $subiektapi->call('order/add',$o);			
 			if(is_array($result)){
@@ -19,8 +23,7 @@
 				if($result['state'] == 'fail'){
 					$fail = true;
 				}else{
-					//zmiana statusu zamówienia na kompletowanie zamówienia. Jeśli zaakceptowana płatność.
-					$order_state = OrderHistory::getLastOrderState($id_order)->id;
+					//zmiana statusu zamówienia na kompletowanie zamówienia. Jeśli zaakceptowana płatność.					
 					if($order_state == _PS_OS_PAYMENT_){
 						$oh = new OrderHistory();			
 						$oh->id_order = $id_order;					
