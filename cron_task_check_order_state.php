@@ -17,10 +17,12 @@
 				if($result['state'] == 'fail'){
 					$fail = true;
 				}else{
+					$remove_order = false;
 					$order_state = OrderHistory::getLastOrderState($id_order)->id;
 					if($result['data']['is_exists']==false){
-						//$ps125_subiektgtapi->logEvent($id_order,'gt_check_order_state',$result['state'],'Dokument sprzedaży usunięty');		
-						//$ps125_subiektgtapi->setRemoveDocSell($id_order);
+						$ps125_subiektgtapi->logEvent($id_order,'gt_check_order_state',$result['state'],'Dokument sprzedaży usunięty');		
+						$ps125_subiektgtapi->setRemoveOrder($id_order);						
+						$remove_order = true;
 					}elseif($result['data']['is_exists']==true && $result['data']['order_processing'] == 1){
 						//zmiana statusu zamówienia na kompletowanie zamówienia. Jeśli zaakceptowana płatność.
 						if($order_state == _PS_OS_PAYMENT_){
@@ -31,10 +33,30 @@
 							$oh->save();
 						}
 						$ps125_subiektgtapi->logEvent($id_order,'gt_check_order_state',$result['state'],'Zamówienie przetwarzane');		
-					}elseif($order_state == _PS_OS_CANCELED_ && strlen($o['doc_ref']) == 0){
+					}
+
+					if($order_state == _PS_OS_CANCELED_ && strlen($o['doc_ref']) == 0){
 						$subiektapi->call('document/delete',array('doc_ref'=>$o['order_ref']));
 						$ps125_subiektgtapi->setRemoveOrder($id_order);						
 						$ps125_subiektgtapi->logEvent($id_order,'gt_check_order_state',$result['state'],'Zamówienie anulowane');								
+						$remove_order = true;
+					}
+					//Usunięcie paragonu lub faktury z systemu po przejściu na jeden ze stanów nieokreślonych
+					switch($order_state){
+						case 9:							
+							$remove_order = true;
+						 break;
+						 case 6:							
+							$remove_order = true;
+						 break;
+						 case 21:							
+							$remove_order = true;
+						 break;
+						 if(true==$remove_order && strlen($o['doc_ref'])>0){
+						 	$ps125_subiektgtapi->setRemoveDocSell($id_order);
+						 	$subiektapi->call('document/delete',array('doc_ref'=>$o['doc_ref']));
+						 	$ps125_subiektgtapi->logEvent($id_order,'gt_check_order_state',$result['state'],'Dokument sprzedaży '.$o['doc_ref'].' usunięty.');	
+						 }
 					}
 				}
 			}else{

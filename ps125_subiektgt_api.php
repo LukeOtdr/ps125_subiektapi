@@ -365,8 +365,8 @@ class Ps125_SubiektGT_Api extends Module {
 	public function getOrdersToCheckState(){
 		$SQL = 'SELECT id_order, gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
-				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 	
-				AND upd_date<ADDDATE(NOW(), INTERVAL -30 MINUTE)
+				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 					
+				AND upd_date>ADDDATE(NOW(), INTERVAL -60 MINUTE)
 				LIMIT 100';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
@@ -382,6 +382,7 @@ class Ps125_SubiektGT_Api extends Module {
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 
 				AND 	gt_sell_pdf_request  = 0 	
 				AND upd_date>ADDDATE(NOW(), INTERVAL -1 HOUR)
+				ORDER BY id_order
 				LIMIT 200';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
@@ -558,7 +559,7 @@ class Ps125_SubiektGT_Api extends Module {
 	}
 
 
-	static public function setRemoveDocSell($id_order,$ref_order){
+	static public function setRemoveDocSell($id_order){
 		$DML = 'UPDATE '._DB_PREFIX_.'subiektgt_api SET gt_sell_doc_sent = 0,email_sell_pdf_sent = 0,gt_sell_pdf_request = 0, upd_date = NOW(),gt_sell_doc_ref = \'\' WHERE id_order = '.$id_order;
 		return DB::getInstance()->Execute($DML);
 	}
