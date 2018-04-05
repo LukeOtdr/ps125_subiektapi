@@ -41,6 +41,13 @@
 						$ps125_subiektgtapi->logEvent($id_order,'gt_check_order_state',$result['state'],'Zamówienie anulowane');								
 						$remove_order = true;
 					}
+
+					if(strlen($o['doc_ref']) == 0){
+						if(isset($result['data']['selling_doc']) && $result['data']['selling_doc']!=''){
+							$ps125_subiektgtapi->setSentSellDocToSubiekt($id_order,$result['data']['selling_doc']);
+							$ps125_subiektgtapi->logEvent($id_order,'gt_check_order_state',$result['state'],'Pobrano nowe dane do zamówienia');								
+						}						
+					}
 					//Usunięcie paragonu lub faktury z systemu po przejściu na jeden ze stanów nieokreślonych
 					switch($order_state){
 						case 9:							

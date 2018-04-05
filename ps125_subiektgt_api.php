@@ -309,6 +309,7 @@ class Ps125_SubiektGT_Api extends Module {
 						'code'=>strlen($p['product_ean13'])>0?$p['product_ean13']:$p['product_supplier_reference'],
 						'qty'=> $p['product_quantity'],
 						'price' => $price,
+						'time_of_delivery' => 2,
 						'supplier_code' => strlen($p['product_supplier_reference'])>0?$p['product_supplier_reference']:$p['product_reference'],
 						'price_before_discount' => $price,
 						'name' => $p['product_name'],
