@@ -309,7 +309,7 @@ class Ps125_SubiektGT_Api extends Module {
 						'code'=>strlen($p['product_ean13'])>0?$p['product_ean13']:$p['product_supplier_reference'],
 						'qty'=> $p['product_quantity'],
 						'price' => $price,
-						'time_of_delivery' => 2,
+						//stime_of_delivery' => 2,
 						'supplier_code' => strlen($p['product_supplier_reference'])>0?$p['product_supplier_reference']:$p['product_reference'],
 						'price_before_discount' => $price,
 						'name' => $p['product_name'],
@@ -353,7 +353,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order, gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 	
-				AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)			
+				AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE) AND upd_date>ADDDATE(NOW(),INTERVAL -1 MONTH)			
 				LIMIT 100';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
@@ -609,6 +609,37 @@ class Ps125_SubiektGT_Api extends Module {
 		 ));
 		return $this->display(__FILE__, 'AdminOrder.tpl');	
 	}
-			
+	
+
+	public function productQtyUpdate($ean13, $qty){
+	  if(strlen($ean13)==0){
+	  	return false;
+	  };
+	  
+	  Db::getInstance()->Execute('UPDATE '._DB_PREFIX_.'product_attribute pa, '._DB_PREFIX_.'product p
+	    SET pa.quantity = '.$qty.'  WHERE  (pa.ean13  = \''.$ean13.'\')    	   	   
+	    AND pa.id_product = p.id_product');
+	  	
+	  if (Db::getInstance()->Affected_Rows() === 0) {	 		  		  	
+	  		$sql_query = 'UPDATE '._DB_PREFIX_.'product p
+				SET p.quantity = '.$qty.','
+				 .($qty>0?'p.active = 1':'p.active = 0').	  	    
+			' WHERE p.ean13  = \''.$ean13.'\'';
+	  	
+		  Db::getInstance()->Execute($sql_query);
+		  //var_dump($sql_query);		  
+	  }else{
+		$sql_query = 'UPDATE '._DB_PREFIX_.'product p INNER JOIN
+	       (SELECT SUM(quantity) as q_s, id_product
+	       FROM '._DB_PREFIX_.'product_attribute GROUP BY id_product) as pa
+	       ON (p.id_product = pa.id_product)                                
+	         SET
+	           p.quantity = q_s                        
+	         WHERE 
+	         pa.ean13  = \''.$ean13.'\'';
+       	Db::getInstance()->Execute($sql_query); 
+	  }
+	  return true;
+	}
 }
 ?>

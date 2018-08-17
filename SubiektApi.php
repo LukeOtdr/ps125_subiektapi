@@ -8,7 +8,6 @@ class SubiektApi
 
     /**
      * Create a new instance
-     * @param string $api_key Your MailChimp API key
      */
     function __construct($api_key,$api_endpoint){        
         $this->api_key = $api_key;       
