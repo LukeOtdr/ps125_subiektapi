@@ -30,7 +30,7 @@
 						$oh->id_employee = 0;
 						$oh->changeIdOrderState(_PS_OS_PREPARATION_,$id_order);
 						$oh->save();
-					}
+					}				
 				}
 			}else{
 				$ps125_subiektgtapi->logEvent($id_order,'gt_order_sent','fail','Check server API logs!');			
@@ -54,6 +54,17 @@
 		}		
 		$ps125_subiektgtapi->unlockOrder($id_order);
 		print_r($result);	
+	
+		//Aktualizacja stanów magazynowych zamówionych produktów
+		$result = $subiektapi->call('product/getqtysbycode',array('products_qtys'=>$o['products']));		
+		if($result['state'] == 'success'){
+			foreach($result['data'] as $ean13 => $pd){			
+				if(is_array($pd)){
+					print_r($pd);
+					$ps125_subiektgtapi->productQtyUpdate($ean13,$pd['available']);
+				}
+			}
+		}		
 	}
 	print("Przetworzonych zamówień:".count($orders)."\n");
 ?>

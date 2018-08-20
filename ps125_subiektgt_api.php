@@ -618,13 +618,13 @@ class Ps125_SubiektGT_Api extends Module {
 	  
 	  Db::getInstance()->Execute('UPDATE '._DB_PREFIX_.'product_attribute pa, '._DB_PREFIX_.'product p
 	    SET pa.quantity = '.$qty.'  WHERE  (pa.ean13  = \''.$ean13.'\')    	   	   
-	    AND pa.id_product = p.id_product');
+	    AND pa.id_product = p.id_product AND pa.on_store = 1');
 	  	
 	  if (Db::getInstance()->Affected_Rows() === 0) {	 		  		  	
 	  		$sql_query = 'UPDATE '._DB_PREFIX_.'product p
 				SET p.quantity = '.$qty.','
 				 .($qty>0?'p.active = 1':'p.active = 0').	  	    
-			' WHERE p.ean13  = \''.$ean13.'\'';
+			' WHERE p.ean13  = \''.$ean13.'\' AND p.on_store = 1';
 	  	
 		  Db::getInstance()->Execute($sql_query);
 		  //var_dump($sql_query);		  
