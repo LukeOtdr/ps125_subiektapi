@@ -338,7 +338,7 @@ class Ps125_SubiektGT_Api extends Module {
 	public function getOrdersToMakeSellDoc(){
 		$SQL = 'SELECT id_order,gt_order_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 AND is_locked = 0 
-				AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE)
+				-- AND upd_date<ADDDATE(NOW(), INTERVAL -5 MINUTE)
 				LIMIT 100';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
@@ -353,7 +353,8 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order, gt_sell_doc_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 	
-				AND upd_date<ADDDATE(NOW(), INTERVAL -10 MINUTE) AND upd_date>ADDDATE(NOW(),INTERVAL -1 MONTH)			
+				-- AND upd_date<ADDDATE(NOW(), INTERVAL -8 MINUTE) 
+				AND upd_date>ADDDATE(NOW(),INTERVAL -1 MONTH)			
 				LIMIT 100';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
@@ -618,13 +619,13 @@ class Ps125_SubiektGT_Api extends Module {
 	  
 	  Db::getInstance()->Execute('UPDATE '._DB_PREFIX_.'product_attribute pa, '._DB_PREFIX_.'product p
 	    SET pa.quantity = '.$qty.'  WHERE  (pa.ean13  = \''.$ean13.'\')    	   	   
-	    AND pa.id_product = p.id_product AND pa.on_store = 1');
+	    AND pa.id_product = p.id_product');
 	  	
 	  if (Db::getInstance()->Affected_Rows() === 0) {	 		  		  	
 	  		$sql_query = 'UPDATE '._DB_PREFIX_.'product p
 				SET p.quantity = '.$qty.','
 				 .($qty>0?'p.active = 1':'p.active = 0').	  	    
-			' WHERE p.ean13  = \''.$ean13.'\' AND p.on_store = 1';
+			' WHERE p.ean13  = \''.$ean13.'\'';
 	  	
 		  Db::getInstance()->Execute($sql_query);
 		  //var_dump($sql_query);		  
