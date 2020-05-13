@@ -23,7 +23,7 @@
 					if($result['data']['id_flag'] == 1010 || $result['data']['id_flag'] == 1006){						
 						$pdf_result = $subiektapi->call('document/getpdf',$o);					
 					}
-					//var_Dump($pdf_result);
+					print_r($pdf_result);
 					if(is_array($pdf_result) && $result['state'] == 'success'){						
 						if($ps125_subiektgtapi->savePdf($pdf_result,$id_order)){
 							$ps125_subiektgtapi->setGetPdf($id_order,$pdf_result['data']['file_name']);							

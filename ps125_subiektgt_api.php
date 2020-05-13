@@ -297,7 +297,7 @@ class Ps125_SubiektGT_Api extends Module {
 							'ref_id' => $this->order_prefix.'CUST '.$customer->id,
 							'is_company' => strlen($address->tax_identity)>0?true:false,
 							'company_name' => $address->company,
-							'tax_id' => strlen($address->tax_identity)>0?$address->tax_identity:'',
+							'tax_id' => strlen($address->tax_identity)>0?$address->tax_identity:'',							
 						),
 
 			);
@@ -309,11 +309,12 @@ class Ps125_SubiektGT_Api extends Module {
 						'code'=>strlen($p['product_ean13'])>0?$p['product_ean13']:$p['product_supplier_reference'],
 						'qty'=> $p['product_quantity'],
 						'price' => $price,
-						//stime_of_delivery' => 2,
+						'time_of_delivery' => 2,
 						'supplier_code' => strlen($p['product_supplier_reference'])>0?$p['product_supplier_reference']:$p['product_reference'],
 						'price_before_discount' => $price,
 						'name' => $p['product_name'],
 						'id_store' => $this->store_id,
+						//'attribute' => 26,
 				);
 				array_push($orders[$order['id_order']]['products'],$a_p);
 			}
@@ -338,8 +339,8 @@ class Ps125_SubiektGT_Api extends Module {
 	public function getOrdersToMakeSellDoc(){
 		$SQL = 'SELECT id_order,gt_order_ref FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 0 AND is_locked = 0 
-				-- AND upd_date<ADDDATE(NOW(), INTERVAL -5 MINUTE)
-				LIMIT 100';
+				AND upd_date<ADDDATE(NOW(), INTERVAL -5 MINUTE)
+				LIMIT 200';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -369,7 +370,7 @@ class Ps125_SubiektGT_Api extends Module {
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 0 AND is_locked = 0 					
 				AND upd_date>ADDDATE(NOW(), INTERVAL -60 MINUTE)
-				LIMIT 100';
+				LIMIT 200';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $order){
@@ -400,7 +401,7 @@ class Ps125_SubiektGT_Api extends Module {
 		$SQL = 'SELECT id_order, doc_file_pdf FROM '._DB_PREFIX_.'subiektgt_api 
 				WHERE gt_order_sent = 1 AND gt_sell_doc_sent = 1 
 				AND 	gt_sell_pdf_request  = 1 AND email_sell_pdf_sent = 0 AND is_locked = 0 				
-				LIMIT 100';
+				LIMIT 200';
 		$orders = array();		
 		$order_to_send = DB::getInstance()->ExecuteS($SQL);
 		foreach($order_to_send as $o){				
@@ -616,28 +617,27 @@ class Ps125_SubiektGT_Api extends Module {
 	  if(strlen($ean13)==0){
 	  	return false;
 	  };
-	  
-	  Db::getInstance()->Execute('UPDATE '._DB_PREFIX_.'product_attribute pa, '._DB_PREFIX_.'product p
+	  $sql_query = 'UPDATE '._DB_PREFIX_.'product_attribute pa, '._DB_PREFIX_.'product p
 	    SET pa.quantity = '.$qty.'  WHERE  (pa.ean13  = \''.$ean13.'\')    	   	   
-	    AND pa.id_product = p.id_product');
-	  	
+	    AND pa.id_product = p.id_product AND pa.on_store = 1';
+	  Db::getInstance()->Execute($sql_query);
+	  var_dump($sql_query);
 	  if (Db::getInstance()->Affected_Rows() === 0) {	 		  		  	
 	  		$sql_query = 'UPDATE '._DB_PREFIX_.'product p
-				SET p.quantity = '.$qty.','
-				 .($qty>0?'p.active = 1':'p.active = 0').	  	    
-			' WHERE p.ean13  = \''.$ean13.'\'';
+				SET p.quantity = '.$qty.' WHERE p.ean13  = \''.$ean13.'\' AND p.on_store = 1';
 	  	
 		  Db::getInstance()->Execute($sql_query);
-		  //var_dump($sql_query);		  
+		  var_dump($sql_query);		  
 	  }else{
 		$sql_query = 'UPDATE '._DB_PREFIX_.'product p INNER JOIN
-	       (SELECT SUM(quantity) as q_s, id_product
+	       (SELECT SUM(quantity) as q_s, id_product,ean13
 	       FROM '._DB_PREFIX_.'product_attribute GROUP BY id_product) as pa
 	       ON (p.id_product = pa.id_product)                                
 	         SET
 	           p.quantity = q_s                        
 	         WHERE 
 	         pa.ean13  = \''.$ean13.'\'';
+
        	Db::getInstance()->Execute($sql_query); 
 	  }
 	  return true;
